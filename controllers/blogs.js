@@ -18,9 +18,7 @@ router.get("/:id", async (req, res) => {
 router.post("/", userExtractor, async (req, res) => {
   const user = req.user;
 
-  req.body.user = user._id;
-  const newBlog = new Blog(req.body);
-  await newBlog.validate();
+  const newBlog = new Blog({ ...req.body, user: user._id });
   const savedBlog = await newBlog.save();
 
   user.blogs.push(savedBlog._id);
@@ -30,7 +28,15 @@ router.post("/", userExtractor, async (req, res) => {
 });
 
 router.delete("/:id", userExtractor, async (req, res) => {
+  const blogToDelete = await Blog.findById(req.params.id);
+  if (!blogToDelete) {
+    return response.status(204).end();
+  }
+
   const user = req.user;
+  if (user.id !== blogToDelete.user.toString()) {
+    return response.status(401).json({ error: "Not authorized to delete this blog" });
+  }
   const deletedBlog = await Blog.findByIdAndRemove(req.params.id);
 
   user.blogs = user.blogs.filter((blogObjId) => blogObjId.toString() !== deletedBlog.id);
@@ -40,7 +46,13 @@ router.delete("/:id", userExtractor, async (req, res) => {
 });
 
 router.put("/:id", async (req, res) => {
-  res.json({ message: "Not implemented" });
+  const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, req.body, {
+    new: true,
+    runValidators: true,
+    context: "query",
+  });
+
+  res.json(updatedBlog);
 });
 
 module.exports = router;
