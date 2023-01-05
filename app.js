@@ -13,7 +13,9 @@ mongoose.set("strictQuery", false);
 mongoose
   .connect(config.MONGODB_URI)
   .then(() => logger.info("Connected to MongoDB"))
-  .catch((error) => logger.error("error connecting to MongoDB:", error.message));
+  .catch((error) =>
+    logger.error("error connecting to MongoDB:", error.message)
+  );
 
 const app = express();
 
@@ -25,6 +27,10 @@ app.use(express.json());
 app.use("/api/login", loginRouter);
 app.use("/api/users", userRouter);
 app.use("/api/blogs", blogRouter);
+if (process.env.NODE_ENV === "test") {
+  const testingRouter = require("./controllers/testing");
+  app.use("/api/testing", testingRouter);
+}
 
 // ERROR HANDLING
 app.use(middleware.errorHandler);

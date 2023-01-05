@@ -24,7 +24,9 @@ router.post("/", userExtractor, async (req, res) => {
   user.blogs.push(savedBlog._id);
   user.save();
 
-  res.status(201).json(savedBlog);
+  const blog = await savedBlog.populate("user", { username: 1, name: 1, id: 1 });
+
+  res.status(201).json(blog);
 });
 
 router.delete("/:id", userExtractor, async (req, res) => {
@@ -46,7 +48,7 @@ router.delete("/:id", userExtractor, async (req, res) => {
 });
 
 router.put("/:id", async (req, res) => {
-  const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, req.body, {
+  const updatedBlog = await Blog.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true,
     context: "query",
